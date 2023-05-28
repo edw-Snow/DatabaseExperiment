@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.myproject.mapper.DatabaseMapper">
+    <resultMap id="StudentStatResultMap" type="StudentStat">
+        <result property="id" column="sid"/>
+    </resultMap>
+
+    <delete id="deleteByIds">
+        delete
+        from experiment.${tableName}
+        where ${idName} in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <select id="selectStudentByPageAndCondition" resultType="com.myproject.pojo.Student">
+        select *
+        from experiment.student
+        <where>
+            <if test="oneStudent.sid !=null and oneStudent.sid !=''">
+                sid like CONCAT('%',#{oneStudent.sid},'%')
+            </if>
+            <if test="oneStudent.name != null and oneStudent.name != ''">
+                `name` like CONCAT('%',#{oneStudent.name},'%')
+            </if>
+            <if test="oneStudent.gender != null and oneStudent.gender != ''">
+                gender like CONCAT('%',#{oneStudent.gender},'%')
+            </if>
+            <if test="oneStudent.age != null and oneStudent.age != ''">
+                age like CONCAT('%',#{oneStudent.age},'%')
+            </if>
+        </where>
+        limit #{begin},#{size}
+    </select>
+    <select id="selectStudentTotalCountByCondition" resultType="java.lang.Integer">
+        select count(*)
+        from experiment.student
+        <where>
+            <if test="oneStudent.sid !=null and oneStudent.sid !=''">
+                sid like CONCAT('%',#{oneStudent.sid},'%')
+            </if>
+            <if test="oneStudent.name != null and oneStudent.name != ''">
+                name like CONCAT('%',#{oneStudent.name},'%')
+            </if>
+            <if test="oneStudent.gender != null and oneStudent.gender != ''">
+                gender like CONCAT('%',#{oneStudent.gender},'%')
+            </if>
+            <if test="oneStudent.age != null and oneStudent.age != ''">
+                age like CONCAT('%',#{oneStudent.age},'%')
+            </if>
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>administer</title>
+    <script src="js/vue.js"></script>
+    <script src="element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="element-ui/lib/theme-chalk/index.css">
+    <script src="js/axios-0.18.0.js"></script>
+    <link href="css/design.css" rel="stylesheet">
+</head>
+<body>
+<div id="student">
+    <h2 class="center">学生表</h2>
+    <div style="height: 10px"></div>
+    <el-form :inline="true">
+        <el-button type="danger" plain @click="deleteByStudentIds">批量删除</el-button>
+        <el-button type="primary" plain @click="dialogVisible1 = true">新增</el-button>
+        <el-form-item class="course-input1">
+            <el-button type="primary" plain @click="dialogVisible = true">修改学生登录信息</el-button>
+        </el-form-item>
+        <el-form-item>
+            <el-input placeholder="请输入学生姓名" v-model="studentInput.name"></el-input>
+        </el-form-item>
+        <el-button type="primary" @click="onSubmitMessage">查询</el-button>
+    </el-form>
+
+    <!--修改学生登录信息表单-->
+    <el-dialog
+            title="修改学生信息"
+            :visible.sync="dialogVisible"
+            width="30%"
+    >
+        <el-form ref="form" :model="studentMessage" label-width="80px">
+            <el-form-item label="学生用户名" style="white-space: nowrap;">
+                <el-input v-model="studentMessage.username"></el-input>
+            </el-form-item>
+
+            <el-form-item label="学生密码">
+                <el-input v-model="studentMessage.password"></el-input>
+            </el-form-item>
+
+            <el-form-item>
+                <el-button type="primary" @click="modifyStudent">提交</el-button>
+                <el-button @click="dialogVisible = false">取消</el-button>
+            </el-form-item>
+        </el-form>
+
+
+    </el-dialog>
+    <!--  新增学生表单  -->
+    <el-dialog
+            title="添加学生"
+            :visible.sync="dialogVisible1"
+            width="30%"
+    >
+        <el-form ref="studentForm" :model="student" label-width="80px">
+            <el-form-item label="学号" prop="sid" style="white-space: nowrap;">
+                <el-input v-model="student.sid"></el-input>
+            </el-form-item>
+
+            <el-form-item label="姓名" prop="name">
+                <el-input v-model="student.name"></el-input>
+            </el-form-item>
+
+            <el-form-item label="性别" prop="gender">
+                <el-input v-model="student.gender"></el-input>
+            </el-form-item>
+
+            <el-form-item label="年龄" prop="age">
+                <el-input v-model="student.age"></el-input>
+            </el-form-item>
+
+            <el-form-item>
+                <el-button type="primary" @click="addStudent">提交</el-button>
+                <el-button @click="dialogVisible1 = false">取消</el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
+    <!--    修改学生表单-->
+    <el-dialog
+            title="修改学生"
+            :visible.sync="dialogVisible2"
+            width="30%"
+    >
+        <el-form ref="studentForm" :model="studentSelected" label-width="80px">
+
+            <el-form-item label="姓名" prop="name">
+                <el-input v-model="studentSelected.name"></el-input>
+            </el-form-item>
+
+            <el-form-item label="性别" prop="gender">
+                <el-input v-model="studentSelected.gender"></el-input>
+            </el-form-item>
+
+            <el-form-item label="年龄" prop="age">
+                <el-input v-model="studentSelected.age"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="modifyStudentData">提交</el-button>
+                <el-button @click="dialogVisible2 = false">取消</el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
+    <!--    学生表格-->
+    <template>
+        <el-table
+                :data="studentData"
+                style="width: 100%"
+                :row-class-name="tableRowClassName"
+                @selection-change="handleSelectionChange">
+            <el-table-column
+                    type="selection"
+                    width="55">
+            </el-table-column>
+            <!--            <el-table-column-->
+            <!--                    type="index"-->
+            <!--                    width="50">-->
+            <!--            </el-table-column>-->
+
+            <el-table-column
+                    prop="sid"
+                    label="学生学号"
+                    align="center"
+            >
+            </el-table-column>
+            <el-table-column
+                    prop="name"
+                    label="学生姓名"
+                    align="center"
+            >
+            </el-table-column>
+            <el-table-column
+                    prop="gender"
+                    align="center"
+                    label="性别">
+            </el-table-column>
+            <el-table-column
+                    prop="age"
+                    align="center"
+                    label="年龄">
+            </el-table-column>
+
+            <el-table-column
+                    align="center"
+                    label="操作">
+
+                <template slot-scope="scope">
+                    <el-row>
+                        <el-button type="primary" @click="handleStudentEdit(scope.row);dialogVisible2=true">修改
+                        </el-button>
+                        <el-button type="danger" @click="handleStudentDelete(scope.row)">删除</el-button>
+                    </el-row>
+                </template>
+            </el-table-column>
+        </el-table>
+    </template>
+    <!--    分页工具条-->
+    <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="currentPage"
+            :page-sizes="[5, 10, 15, 20]"
+            :page-size="5"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="totalCount">
+    </el-pagination>
+    <br>
+    <el-row class="shift">
+        <el-button type="primary" @click="toTeacherTable" round>教师表</el-button>
+        <span style="width: 50px;"></span>
+        <el-button type="primary" @click="toCrouseTable" round>课程表</el-button>
+    </el-row>
+</div>
+<script>
+    // import el from "./element-ui/src/locale/lang/el";
+
+    new Vue({
+        el: "#student",
+        mounted() {
+            this.selectStudent();
+            this.open1();
+        },
+        data() {
+            return {
+                //条件查询输入的数据
+                studentInput: {
+                    sid: "",
+                    name: "",
+                    gender: "",
+                    age: ""
+                },
+                text: "das",
+                //批量删除时选中的元素
+                selectedIds: [],
+                //复选框选中的信息
+                multipleSelection: [],
+                //修改学生登录信息弹窗
+                dialogVisible: false,
+                //新增学生信息窗口
+                dialogVisible1: false,
+                //修改学生信息表单
+                dialogVisible2: false,
+                //表格数据
+                studentData: [],
+                //修改时展示行的学生信息
+                studentSelected: {
+                    sid: "",
+                    name: "",
+                    gender: "",
+                    age: ""
+                },
+                studentData1: [{
+                    sid: "1",
+                    name: "mike",
+                    gender: "男",
+                    age: "18"
+                }, {
+                    sid: "2",
+                    name: "mike",
+                    gender: "男",
+                    age: "18"
+                }],
+                teacherData: [],
+                courseData: [],
+                //学生用户名和密码
+                studentMessage: {
+                    username: "",
+                    password: ""
+                },
+                //每页显示条数
+                pageSize: 5,
+                //总记录数:
+                totalCount: 100,
+                //当前页码
+                currentPage: 1,
+                //学生信息
+                student: {
+                    sid: "",
+                    name: "",
+                    gender: "",
+                    age: ""
+                },
+                // //教师信息
+                // teacher: {
+                //     tid: "",
+                //     name: "",
+                //     position: "",
+                //     salary: ""
+                // },
+                //课程信息
+                course: {
+                    cid: "",
+                    name: "",
+                    credits: "",
+                    tid: ""
+                }
+            }
+        },
+        methods: {
+            //条件查询数据获取
+            onSubmitMessage() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/DatabaseExperiment/administer/selectStudentByPageAndCondition?currentPage=" + this.currentPage + "&pageSize=" + this.pageSize,
+                    data: this.studentInput
+                }).then(resp => {
+                    this.totalCount = resp.data.totalCount;
+                    this.studentData = resp.data.rows;
+                })
+            },
+            //跳转教师表
+            toTeacherTable() {
+                window.location.href = "http://localhost:8080/DatabaseExperiment/administerTeacher.html";
+            },
+            //跳转课程表
+            toCrouseTable() {
+                window.location.href = "http://localhost:8080/DatabaseExperiment/administerCourse.html";
+            },
+            handleStudentEdit(row) {
+                this.studentSelected.sid = row.sid;
+                this.studentSelected.name = row.name;
+                this.studentSelected.gender = row.gender;
+                this.studentSelected.age = row.age;
+            },
+            handleStudentDelete(row) {
+                this.$confirm('此操作将删除该数据, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/DatabaseExperiment/administer/deleteStudentByRow",
+                        data: row.sid
+                    }).then(resp => {
+                        if (resp.data == "success") {
+                            this.selectStudent();
+                            this.$message({
+                                message: '删除成功',
+                                type: 'success'
+                            });
+                        }
+                    })
+                })
+            },
+            //显示登录信息
+            open1() {
+                let flag = sessionStorage.getItem('flag');
+                if (!flag) {
+                    this.$notify({
+                        title: '管理员身份登录成功',
+                        // message: '这是一条成功的提示消息',
+                        type: 'success'
+                    });
+                    sessionStorage.setItem('flag', true)
+                }
+            },
+            deleteByStudentIds() {
+                this.$confirm('此操作将删除该数据, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    for (let i = 0; i < this.multipleSelection.length; i++) {
+                        let selectElement = this.multipleSelection[i];
+                        this.selectedIds[i] = selectElement.sid;
+                    }
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/DatabaseExperiment/administer/deleteByStudentIds",
+                        data: this.selectedIds
+                    }).then(resp => {
+                        if (resp.data == "success") {
+                            this.selectStudent();
+                            this.$message({
+                                message: '批量删除成功',
+                                type: 'success'
+                            });
+                        }
+                    })
+                })
+            },
+            modifyStudent() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/DatabaseExperiment/administer/updataStudentMessage",
+                    data: this.studentMessage
+                }).then(resp => {
+                    if (resp.data == "success") {
+                        this.dialogVisible = false;
+                        this.$message({
+                            message: '修改成功',
+                            type: 'success'
+                        });
+                    }
+                })
+            },
+            //修改学生
+            modifyStudentData() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/DatabaseExperiment/administer/updateStudent",
+                    data: this.studentSelected
+                }).then(resp => {
+                    if (resp.data == "success") {
+                        this.dialogVisible2 = false;
+                        this.selectStudent();
+                        this.$message({
+                            message: '修改成功',
+                            type: 'success'
+                        });
+                    }
+                })
+            },
+            //添加学生
+            addStudent() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/DatabaseExperiment/administer/addStudent",
+                    data: this.student
+                }).then(resp => {
+                    if (resp.data == "1") {
+                        this.selectStudent();
+                        this.dialogVisible1 = false;
+                        this.$message({
+                            message: '添加成功',
+                            type: 'success'
+                        });
+                    } else {
+                        this.$message.error('主键重复，添加失败');
+                    }
+                })
+            },
+            //表格展现每行变化
+            tableRowClassName({row, rowIndex}) {
+                if (rowIndex % 4 == 2) {
+                    return 'warning-row';
+                } else if (rowIndex % 4 == 0) {
+                    return 'success-row';
+                }
+                return '';
+            },
+            // 复选框选中后执行的方法
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+
+                // console.log(this.multipleSelection)
+            },
+            //查询所有
+            selectStudent() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/DatabaseExperiment/administer/selectStudentByPage?currentPage=" + this.currentPage + "&pageSize=" + this.pageSize,
+                }).then(resp => {
+                    this.totalCount = resp.data.totalCount;
+                    this.studentData = resp.data.rows;
+                })
+
+            },
+            //分页
+            handleSizeChange(val) {
+                // 重新设置每页显示的条数
+                this.pageSize = val;
+                this.selectStudent();
+            },
+            handleCurrentChange(val) {
+                // 重新设置当前页码
+                this.currentPage = val;
+                this.selectStudent();
+            },
+        }
+    })
+</script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>administer</title>
+    <script src="js/vue.js"></script>
+    <script src="element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="element-ui/lib/theme-chalk/index.css">
+    <script src="js/axios-0.18.0.js"></script>
+    <link href="css/design.css" rel="stylesheet">
+</head>
+<body>
+<div id="course">
+    <h2 class="center">课程表</h2>
+    <el-row style="display:flex; align-items:center;">
+        <div style="flex:1; display:flex; align-items:center;">
+            <el-button type="danger" plain>批量删除</el-button>
+            <el-button type="primary" plain>新增</el-button>
+        </div>
+        <div style="display:flex; align-items:center; flex-shrink:0; text-align:right;">
+            <el-button @click="toStudentHtml" id="returnBtn" type="primary" plain>返回</el-button>
+        </div>
+    </el-row>
+
+
+    <!--  课程表单-->
+    <template>
+        <el-table
+                :data="courseData"
+                style="width: 100%"
+                :row-class-name="tableRowClassName"
+                @selection-change="handleSelectionChange">
+            <el-table-column
+                    type="selection"
+                    width="55">
+            </el-table-column>
+
+            <el-table-column
+                    prop="cid"
+                    label="课程号"
+                    align="center"
+            >
+            </el-table-column>
+            <el-table-column
+                    prop="name"
+                    label="课程名称"
+                    align="center"
+            >
+            </el-table-column>
+            <el-table-column
+                    prop="credits"
+                    align="center"
+                    label="课程学分">
+            </el-table-column>
+            <el-table-column
+                    prop="tid"
+                    align="center"
+                    label="课程教师工号">
+            </el-table-column>
+
+            <el-table-column
+                    align="center"
+                    label="操作">
+
+                <template slot-scope="scope">
+                    <el-row>
+                        <el-button type="primary" @click="handleStudentEdit(scope.row);dialogVisible2=true">修改
+                        </el-button>
+                        <el-button type="danger" @click="handleStudentDelete(scope.row)">删除</el-button>
+                    </el-row>
+                </template>
+            </el-table-column>
+        </el-table>
+    </template>
+    <el-row class="shift">
+        <el-button type="primary" @click="toStudentTable" round>学生表</el-button>
+        <span style="width: 50px;"></span>
+        <el-button type="primary" @click="toTeacherTable" round>教师表</el-button>
+    </el-row>
+</div>
+<script>
+    new Vue({
+        el: "#course",
+        mounted() {
+            this.selectCourse();
+            this.toBackDisplay();
+        },
+        data() {
+            return {
+                courseData: [],
+                //课程信息
+                course: {
+                    cid: "",
+                    name: "",
+                    credits: "",
+                    tid: ""
+                }
+            }
+        },
+        methods: {
+            //返回学生课程页面
+            toStudentHtml() {
+                window.location.href = "http://localhost:8080/DatabaseExperiment/student.html";
+            },
+            //返回按钮是否展示
+            toBackDisplay() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/DatabaseExperiment/loginServlet/getCookie",
+                }).then(resp => {
+                    if (resp.data == "administer") {
+                        document.getElementById('returnBtn').style.display = 'none';
+                    } else if (resp.data == "student") {
+                        document.getElementById('returnBtn').style.display = 'block';
+                    }
+                })
+            },
+            handleStudentDelete(row) {
+
+            },
+            handleStudentEdit(row) {
+
+            },
+            handleSelectionChange(val) {
+
+            },
+            toStudentTable() {
+                window.location.href = "http://localhost:8080/DatabaseExperiment/administerStudent.html";
+            },
+            toTeacherTable() {
+                window.location.href = "http://localhost:8080/DatabaseExperiment/administerTeacher.html";
+
+            },
+            tableRowClassName({row, rowIndex}) {
+                if (rowIndex % 4 == 2) {
+                    return 'warning-row';
+                } else if (rowIndex % 4 == 0) {
+                    return 'success-row';
+                }
+                return '';
+            },
+            selectCourse() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/DatabaseExperiment/common/selectCourse",
+                }).then(resp => {
+                    this.courseData = resp.data;
+                })
+            }
+        }
+    })
+</script>
+</body>
+</html>

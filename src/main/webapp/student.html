@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>studentStat</title>
+    <script src="js/vue.js"></script>
+    <script src="element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="element-ui/lib/theme-chalk/index.css">
+    <script src="js/axios-0.18.0.js"></script>
+    <link href="css/design.css" rel="stylesheet">
+</head>
+<body>
+<div id="student">
+    <el-form :inline="true">
+        <h2 class="center">学生选修信息</h2>
+        <div style="height: 10px"></div>
+        <el-button type="primary" plain @click="dialogVisible1 = true">选修课程</el-button>
+        <el-form-item class="course-input">
+            <el-button type="primary" plain>修改用户登录信息</el-button>
+        </el-form-item>
+        <el-form-item>
+            <el-input placeholder="课程名称"></el-input>
+        </el-form-item>
+        <el-button type="primary" @click="onSubmit">查询</el-button>
+    </el-form>
+    <!--    学生选修表格-->
+    <template>
+        <el-table
+                :data="studentStat"
+                style="width: 100%"
+                :row-class-name="tableRowClassName">
+
+            <el-table-column
+                    prop="id"
+                    label="学号"
+                    align="center"
+            >
+            </el-table-column>
+            <el-table-column
+                    prop="sname"
+                    label="学生姓名"
+                    align="center"
+            >
+            </el-table-column>
+            <el-table-column
+                    prop="cid"
+                    align="center"
+                    label="课程号">
+            </el-table-column>
+            <el-table-column
+                    prop="cname"
+                    align="center"
+                    label="课程名">
+            </el-table-column>
+            <el-table-column
+                    prop="score"
+                    align="center"
+                    label="成绩">
+            </el-table-column>
+
+            <el-table-column
+                    align="center"
+                    label="操作">
+
+                <template slot-scope="scope">
+                    <el-row>
+                        <el-button type="danger" @click="handleStudentDelete(scope.row)">退选</el-button>
+                    </el-row>
+                </template>
+            </el-table-column>
+        </el-table>
+    </template>
+    <el-dialog
+            title="选修课程"
+            :visible.sync="dialogVisible1"
+            width="30%"
+            @close="handleClose"
+    >
+        <el-form ref="studentForm" label-width="100px">
+
+            <el-form-item label="选修课程名称">
+                <el-input v-model="courseName"></el-input>
+            </el-form-item>
+
+            <el-form-item>
+                <el-button type="primary" @click="addSelectiveCourse">提交</el-button>
+                <el-button @click="dialogVisible1 = false">取消</el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
+
+    <div style="height: 20px;"></div>
+    <div style="display: flex; justify-content: space-between;">
+        <el-button type="primary" @click="toCrouseTable" round>跳转课程表</el-button>
+        <el-tag style="font-size: 20px;">已修总学分:{{ totalScore }}</el-tag>
+    </div>
+
+</div>
+<script>
+    new Vue({
+        el: "#student",
+        data() {
+            return {
+                totalScore: "",
+                studentStat: [],
+                dialogVisible1: false,
+                //选修课程名
+                courseName: ""
+            }
+        },
+        methods: {
+            getTotalScore() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/DatabaseExperiment/student/getTotalScore",
+                }).then(resp => {
+                    this.totalScore = resp.data;
+                })
+            },
+            //退选课程
+            handleStudentDelete(row) {
+                this.$confirm('此操作将退选课程并成绩作废, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/DatabaseExperiment/student/handleStudentDelete?sid=" + row.id + "&cid=" + row.cid,
+                    }).then(resp => {
+                        if (resp.data == "success") {
+                            this.selectStudentScore();
+                            this.getTotalScore();
+                            this.$message({
+                                message: '退选成功',
+                                type: 'success'
+                            });
+                        }
+                    })
+                })
+            },
+            //清除选修课程对话框内容
+            handleClose() {
+                this.courseName = '';
+            },
+            addSelectiveCourse() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/DatabaseExperiment/student/addSelectiveCourse?courseName=" + this.courseName,
+                }).then(resp => {
+                    if (resp.data == "1") {
+                        this.dialogVisible1 = false;
+                        this.selectStudentScore();
+                        this.$message({
+                            message: '选修课程添加成功',
+                            type: 'success'
+                        });
+                    } else {
+                        //已选修课程
+                        this.$message.error('你已选修了此门课程或者课程名输入有误');
+                    }
+                })
+            },
+            open() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/DatabaseExperiment/loginServlet/getUserName",
+                }).then(resp => {
+                    let flag = sessionStorage.getItem('flag');
+                    if (!flag) {
+                        this.$notify({
+                            title: `学生${resp.data}登录成功`,
+                            type: 'success'
+                        });
+                        sessionStorage.setItem('flag', true)
+                    }
+                })
+            },
+            toCrouseTable() {
+                window.location.href = "http://localhost:8080/DatabaseExperiment/administerCourse.html";
+            },
+            selectStudentScore() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/DatabaseExperiment/student/selectStudentScore"
+                }).then(resp => {
+                    this.studentStat = resp.data;
+                    this.getTotalScore();
+                })
+            }
+        },
+        mounted() {
+            this.selectStudentScore();
+            this.open();
+        }
+    })
+</script>
+</body>
+</html>

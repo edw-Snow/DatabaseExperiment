@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body>
+<dialog><p id="myText">dsad</p></dialog>
+
+
+<script>
+    // 创建一个包含要绑定到元素的属性的对象
+    const textObj = {
+        name: "John",
+        age: 30,
+        city: "New York"
+    };
+
+    // 将要显示的元素绑定到JS对象的属性
+    const textElement = document.getElementById("myText");
+    textElement.textContent = `${textObj.name} is ${textObj.age} years old and lives in ${textObj.city}`;
+
+    // 更新属性的值以更新文本
+    textObj.age = 40;
+    textElement.textContent = `${textObj.name} is now ${textObj.age} years old and still lives in ${textObj.city}`;
+</script>
+</body>
+</html>
