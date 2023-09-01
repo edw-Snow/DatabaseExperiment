@@ -8,7 +8,7 @@ import javax.jws.soap.SOAPBinding;
 import java.util.List;
 
 public interface DatabaseMapper {
-    @Select("select * from experiment.administer where username=#{username} and password=#{password}")
+    @Select("select * from experiment.administer  where username=#{username} and password=#{password}")
     User loginAdministerTest(@Param("username") String username, @Param("password") String password);
 
     @Select("select * from experiment.studentuser where username=#{username} and password=#{password}")

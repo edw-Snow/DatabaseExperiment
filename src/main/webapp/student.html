@@ -109,6 +109,15 @@
             }
         },
         methods: {
+            //表格展现每行变化
+            tableRowClassName({row, rowIndex}) {
+                if (rowIndex % 4 == 2) {
+                    return 'warning-row';
+                } else if (rowIndex % 4 == 0) {
+                    return 'success-row';
+                }
+                return '';
+            },
             getTotalScore() {
                 axios({
                     method: "post",
